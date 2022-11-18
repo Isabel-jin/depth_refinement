@@ -141,7 +141,7 @@ def Jacobi(D):
 
 def GaussNewton(D):
     F = np.zeros((1,6*N))
-    B = B2D(D)
+    B = D2B(D)
     for i in range(0,N):
         F[1][i] = ShadingGradients1(B,I,i,wg) 
     for i in range(N,2*N):
