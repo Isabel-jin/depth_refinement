@@ -23,7 +23,7 @@ def hist(img):
     plt.subplot(2, 2, 4)
     plt.hist(img[:, :, 2].ravel(), 256, [0, 255], color='red')  # img.ravel将多维数组变成一维数组
     plt.title('red')
-    plt.savefig(r'./result/albedo_hist.jpg')
+    plt.savefig(r'./result/albedo/albedo_hist.jpg')
 
 
 def grad(img):
@@ -31,8 +31,8 @@ def grad(img):
     sobelx = cv.Sobel(img, cv.CV_64F, 1, 0, ksize=5)
     sobely = cv.Sobel(img, cv.CV_64F, 0, 1, ksize=5)
 
-    cv.imwrite('./result/sobel_x.jpg', sobelx)
-    cv.imwrite('./result/sobel_y.jpg', sobely)
+    cv.imwrite('./result/albedo/sobel_x.jpg', sobelx)
+    cv.imwrite('./result/albedo/sobel_y.jpg', sobely)
 
     plt.figure()
     plt.subplot(211)
@@ -42,13 +42,13 @@ def grad(img):
     plt.hist(sobely.ravel(), 256, [0, 255])
     plt.title('sobely_hist')
 
-    plt.savefig(r'./result/sobel_hist.jpg')
+    plt.savefig(r'./result/albedo/sobel_hist.jpg')
     return sobelx, sobely
 
 if __name__ == '__main__' :
     img = cv.imread('./RGBD_single/0_000000.jpg', cv.IMREAD_COLOR)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    cv.imwrite('./result/gray.jpg', gray)
+    cv.imwrite('./result/albedo/gray.jpg', gray)
 
     length = gray.shape[0]
     width = gray.shape[1]
@@ -64,21 +64,21 @@ if __name__ == '__main__' :
     for i in range(3):
         albedo[:, :, i] = img[:, :, i] / gray * 150  # 150是实验得到的参数
 
-    cv.imwrite('./result/albedo.jpg', albedo)
+    cv.imwrite('./result/albedo/albedo.jpg', albedo)
     # albedo三个通道的直方图
     hist(albedo)
 
     albedo = albedo.astype(np.uint8)
     albedo_gray = cv.cvtColor(albedo, cv.COLOR_BGR2GRAY)
-    cv.imwrite('./result/albedo_gray.jpg', albedo_gray)
+    cv.imwrite('./result/albedo/albedo_gray.jpg', albedo_gray)
 
     # 求xy两个方向的梯度
     sobelx, sobely = grad(albedo_gray)
 
     # 设定特定的阈值进行二值化（50为参数）
     ret, binary_x = cv.threshold(sobelx, 50, 255, cv.THRESH_BINARY_INV)
-    cv.imwrite('./result/binary_x.jpg', binary_x)
+    cv.imwrite('./result/albedo/binary_x.jpg', binary_x)
 
     # 设定特定的阈值
     ret, binary_y = cv.threshold(sobely, 50, 255, cv.THRESH_BINARY_INV)
-    cv.imwrite('./result/binary_y.jpg', binary_y)
+    cv.imwrite('./result/albedo/binary_y.jpg', binary_y)

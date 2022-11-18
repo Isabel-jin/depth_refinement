@@ -67,6 +67,7 @@ H=np.reshape(H,(-1,9))
 
 #计算lk
 l=np.linalg.inv(H.T@H)@H.T@I_RESHAPE
+print(l)
 #保存数据
 '''
 np.savetxt(fname="D.csv",X=D,fmt="%f",delimiter=",")
