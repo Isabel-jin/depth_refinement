@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 import cv2
 import math
+import light_pic
 
 #获得深度图像
 D=np.array(Image.open('D_filtered.png'))
@@ -11,6 +12,8 @@ for i in range(D.shape[0]):
     for j in range(D.shape[1]):
         if D[i][j]!=0 and D[i-1][j]!=0 and D[i][j-1]!=0:
             mask[i][j]=1
+
+cv2.imwrite('./result/light_estimate/mask.jpg', 255 * mask)
 #灰度原始图像
 Ic=Image.open('RGBD_single/0_000000.jpg')
 grey_im=Ic.convert('L')
@@ -50,7 +53,7 @@ I_n=np.zeros((D.shape[0],D.shape[1],3))
 I_n=n*255
 I_n=Image.fromarray(np.uint8(I_n))
 I_n.show()
-I_n.save('I_n_filtered.jpg')
+I_n.save('./result/light_estimate/I_n_filtered.jpg')
 #计算用于得到l的H矩阵
 #n= np.load(file="n.npy")
 for i in range(I.shape[0]):
@@ -72,11 +75,14 @@ I_0removed=I_RESHAPE[~np.all(I_RESHAPE==-1,axis=1)]
 #计算lk
 l=np.linalg.inv(H_0removed.T@H_0removed)@H_0removed.T@I_0removed
 
+#生成光照图像
+light_pic.cubemap(l)
+
 #保存数据
 #np.savetxt(fname="D.csv",X=D,fmt="%f",delimiter=",")
 #np.save(file="n.npy",arr=n)
-np.savetxt(fname="l_filtered.csv",X=l,fmt="%f",delimiter=",")
-np.savetxt(fname="H_filtered.csv",X=H,fmt="%f",delimiter=",")
+np.savetxt(fname="./result/light_estimate/l_filtered.csv",X=l,fmt="%f",delimiter=",")
+np.savetxt(fname="./result/light_estimate/H_filtered.csv",X=H,fmt="%f",delimiter=",")
 
 
 
