@@ -6,15 +6,15 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 #球谐函数系数
-lk = [94.678201,
--3.423619,
-13.471551,
-25.164422,
--0.318307,
--8.479666,
-4.288890,
-24.088781,
--9.017026]
+lk = [79.059310,
+2.190649,
+11.876344,
+-55.593817,
+-19.686860,
+-12.088145,
+-3.791434,
+-53.197345,
+2.502517]
 
 def cubemap(lk):
     SIZE = 1024
@@ -65,11 +65,11 @@ def cubemap(lk):
 
         # Save output image using prefix, type and index info.
         pimg = Image.fromarray(color)
-        pimg.save(os.path.join('./result/light', "%s%d.%s" % ('side_', i, 'jpg')), quality=85)
+        pimg.save(os.path.join('./result/light', "%s%d.%s" % ('1202bside_', i, 'jpg')), quality=85)
         plt.figure()
         plt.hist(np.array(pimg).ravel(), 256, [0, 255])
 
-        plt.savefig(os.path.join('./result/light', "%s%d.%s" % ('hist_side_', i, 'jpg')))
+        plt.savefig(os.path.join('./result/light', "%s%d.%s" % ('1202bhist_side_', i, 'jpg')))
 
 if __name__ == "__main__":
     cubemap(lk)
