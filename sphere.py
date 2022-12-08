@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import Harmonic
 
-lk = [20,
-2.190649,
-11.876344,
-55.593817,
-19.686860,
-12.088145,
-3.791434,
-53.197345,
--2.502517]
+lk = [-20,
+-20,
+-20,
+-20,
+-20,
+-20,
+-20,
+-20,
+-20]
 
 def rgb_to_hex(r, g, b):
     return ('{:02X}' * 3).format(r, g, b)

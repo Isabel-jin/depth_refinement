@@ -1,5 +1,14 @@
 import numpy as np
 
+fx = 975.9293
+fy = 975.9497
+ux = 1029.9879
+uy = 766.8806
+
+# Nx为原图每行的像素个数，N为图像总的像素个数
+Nx = 460
+N = 460 * 380
+
 def ShadingGradients1(B,I,n,wg):   #B:rgb图像 I:灰度图 n:点序数 wg:梯度约束权重
     Nx = B.shape(0)
     return pow(wg,0.5)* [B[n]-B[n+Nx]-(I[n]-I[n+Nx])]

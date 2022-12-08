@@ -26,6 +26,7 @@ fx=974.20551
 fy=973.9942
 cx=1025.8949
 cy=773.54004
+
 #计算法向量矩阵n
 for i in range(n.shape[0]):
     for j in range(n.shape[1]):

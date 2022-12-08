@@ -68,7 +68,5 @@ def Render(theta, phi, lk):
     color = 0
     for i in range(n):
         color = color + Y[i] * lk[i]
-        if color > 100:
-            print("error")
     return color
 
