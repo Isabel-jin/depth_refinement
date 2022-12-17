@@ -1,13 +1,16 @@
 import numpy as np
 
-# 相机内参
-fx = 975.9293
-fy = 975.9497
-ux = 1029.9879
-uy = 766.8806
+# 下采样
+sampler = 3
 
-# Nx为原图每行的像素个数，N为图像总的像素个数
-Nx = 154
+# 相机内参
+fx = 975.9293/sampler
+fy = 975.9497/sampler
+ux = 63.5
+uy = 77
+
+# Nx为原图每行的像素个数（列数），N为图像总的像素个数
+Nx = 127
 N = 154 * 127
 
 l = [51.040569,
@@ -30,7 +33,7 @@ def ShadingGradients1(B, I, n, wg):
     :param wg: 超参数
     :return: 阴影梯度约束第一项
     '''
-    return pow(wg, 0.5) * (B[n] - B[n + Nx] - (I[n] - I[n + Nx]))
+    return pow(wg, 0.5) * (B[n] - B[n + 1] - (I[n] - I[n + 1]))
 
 
 def ShadingGradients2(B, I, n, wg):
@@ -42,7 +45,7 @@ def ShadingGradients2(B, I, n, wg):
     :param wg: 超参数
     :return: 阴影梯度约束第二项
     '''
-    return pow(wg, 0.5) * (B[n] - B[n + 1] - (I[n] - I[n + 1]))
+    return pow(wg, 0.5) * (B[n] - B[n + Nx] - (I[n] - I[n + Nx]))
 
 
 def SmoothConstraint1(D, n, ws):
@@ -53,10 +56,14 @@ def SmoothConstraint1(D, n, ws):
     :param ws: 超参数
     :return: 平滑约束第一项
     '''
-    i = n // Nx
-    r3 = D[n] - ws * (D[n - Nx] + D[N - 1] + D[n + Nx] + D[n + 1])
-    r1 = (i - ux) / fx * r3
-    return pow(ws, 0.5) * r1
+    j = n // Nx
+    i = n - Nx * j
+    r1 = (i - ux) / fx * D[n]
+    r2 = (i - 1 - ux) / fx * D[n - 1]
+    r3 = (i - ux) / fx * D[n - Nx]
+    r4 = (i + 1 - ux) / fx * D[n + 1]
+    r5 = (i - ux) / fx * D[n + Nx]
+    return pow(ws, 0.5) * (r1 - 0.25 * (r2 + r3 + r4 + r5))
 
 
 def SmoothConstraint2(D, n, ws):
@@ -67,11 +74,13 @@ def SmoothConstraint2(D, n, ws):
     :param ws: 超参数
     :return: 平滑约束第二项
     '''
-    i = n // Nx
-    j = n - i * Nx
-    r3 = D[n] - ws * (D[n - Nx] + D[n - 1] + D[n + Nx] + D[n + 1])
-    r2 = (j - uy) / fy * r3
-    return pow(ws, 0.5) * r2
+    j = n // Nx
+    r1 = (j - uy) / fy * D[n]
+    r2 = (j - uy) / fy * D[n - 1]
+    r3 = (j - 1 - uy) / fy * D[n - Nx]
+    r4 = (j - uy) / fy * D[n + 1]
+    r5 = (j + 1 - uy) / fy * D[n + Nx]
+    return pow(ws, 0.5) * (r1 - 0.25 * (r2 + r3 + r4 + r5))
 
 
 def SmoothConstraint3(D, n, ws):
@@ -82,8 +91,8 @@ def SmoothConstraint3(D, n, ws):
     :param ws: 超参数
     :return: 平滑约束第三项
     '''
-    r3 = D[n] - ws * (D[n - Nx] + D[n - 1] + D[n + Nx] + D[n + 1])
-    return pow(ws, 0.5) * r3
+    r = D[n] - 0.25 * (D[n - Nx] + D[n - 1] + D[n + Nx] + D[n + 1])
+    return pow(ws, 0.5) * r
 
 
 def DepthConstraint(D, Di, n, wp):

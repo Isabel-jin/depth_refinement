@@ -3,18 +3,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 import Harmonic
 
-lk = [-20,
--20,
--20,
--20,
--20,
--20,
--20,
--20,
--20]
+
+lk = [51.040569,
+     -11.897069,
+     -78.228003,
+     -18.870133,
+     0.716704,
+     -34.047397,
+     -9.706077,
+     6.701684,
+     0.406902]
+
 
 def rgb_to_hex(r, g, b):
     return ('{:02X}' * 3).format(r, g, b)
+
 
 def show_sphere(lk):
     fig = plt.figure()

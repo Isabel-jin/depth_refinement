@@ -2,14 +2,17 @@ import numpy as np
 import constrains
 import InvLU
 
-# 相机内参
-fx = 975.9293
-fy = 975.9497
-ux = 1029.9879
-uy = 766.8806
+# 下采样
+sampler = 3
 
-# Nx为原图每行的像素个数，N为图像总的像素个数
-Nx = 154
+# 相机内参
+fx = 975.9293/sampler
+fy = 975.9497/sampler
+ux = 63.5
+uy = 77
+
+# Nx为原图每行的像素个数（列数），N为图像总的像素个数
+Nx = 127
 N = 154 * 127
 
 l = [51.040569,
@@ -36,24 +39,25 @@ def PartialHk(D, n):
         return np.zeros((3, 9))
 
     # 分别求第n个点的x,y,z方向法向量
-    nx = D[n-1]*(D[n]-D[n-Nx])/fy 
-    ny = D[n-Nx]*(D[n]-D[n-1])/fx 
+    nx = D[n-Nx]*(D[n]-D[n-1])/fy
+    ny = D[n-1]*(D[n]-D[n-Nx])/fx
 
-    i = n // Nx
-    j = n - Nx * i
+    # i代表x方向坐标，j代表y方向坐标
+    j = n // Nx
+    i = n - Nx * j
     a = (ux-i)/fx
     b = (uy-j)/fy
 
     nz = a*nx/fx + b*ny/fy - D[n-Nx]*D[n-1]/(fx*fy)
 
     # 该点三个方向的法向量对该点和近邻点的偏导
-    dnx_dD1 = D[n-1]/fy     #dnx/dD(i,j)
-    dnx_dD2 = (D[n]-D[n-Nx])/fy  #dnx/dD(i,j-1)
-    dnx_dD3 = -D[n-1]/fy  #dnx/dD(i-1,j)
+    dnx_dD1 = D[n-Nx]/fy     #dnx/dD(i,j)
+    dnx_dD2 = (D[n]-D[n-1])/fy  #dnx/dD(i,j-1)
+    dnx_dD3 = -D[n-Nx]/fy  #dnx/dD(i-1,j)
 
-    dny_dD1 = D[n-Nx]/fx 
-    dny_dD2 = -D[n-Nx]/fx 
-    dny_dD3 = (D[n]-D[n-1])/fx
+    dny_dD1 = D[n-1]/fx
+    dny_dD2 = -D[n-1]/fx
+    dny_dD3 = (D[n]-D[n-Nx])/fx
 
     dnz_dD1 = a * dnx_dD1 + b * dny_dD1
     dnz_dD2 = a * dnx_dD2 + b * dny_dD2
@@ -119,10 +123,10 @@ def PartialB(D, n_B, n_D, l):
     if(n_B == n_D):
         for i in range(0,9):
            r = r + l[i] * dh_dD[0][i]
-    if(n_B == n_D + 1):
+    if(n_B == n_D + Nx):
         for i in range(0,9):
            r = r + l[i] * dh_dD[1][i]
-    if(n_B == n_D + Nx):
+    if(n_B == n_D + 1):
         for i in range(0,9):
            r = r + l[i] * dh_dD[2][i]
     return r
@@ -138,9 +142,9 @@ def PartialNum1(D, n_E, n_D, wg, l):
     :param l: 二阶九项光照系数
     :return: 偏导值
     '''
-    if n_E+Nx < 0 or n_E+Nx >= N:
+    if n_E+1 < 0 or n_E+1 >= N:
         return 0
-    return pow(wg, 0.5) * (PartialB(D, n_E, n_D, l) - PartialB(D, n_E+Nx, n_D, l))
+    return pow(wg, 0.5) * (PartialB(D, n_E, n_D, l) - PartialB(D, n_E+1, n_D, l))
 
 def PartialNum2(D,n_E,n_D,wg,l):
     '''
@@ -152,9 +156,9 @@ def PartialNum2(D,n_E,n_D,wg,l):
     :param l: 二阶九项光照系数
     :return: 偏导值
     '''
-    if n_E+1 < 0 or n_E+1 >= N:
+    if n_E+Nx < 0 or n_E+Nx >= N:
         return 0
-    return pow(wg, 0.5) * (PartialB(D, n_E, n_D, l) - PartialB(D, n_E+1, n_D, l))
+    return pow(wg, 0.5) * (PartialB(D, n_E, n_D, l) - PartialB(D, n_E+Nx, n_D, l))
 
 def PartialNum3(n_E,n_D,ws):
     '''
@@ -164,9 +168,10 @@ def PartialNum3(n_E,n_D,ws):
     :param ws: 超参数
     :return: 偏导值
     '''
-    i = n_D // Nx
+    j = n_D // Nx
+    i = n_D - Nx * j
     a = (i-ux)/fx
-    if(n_E == n_D + Nx):
+    if(n_E == n_D + 1):
         return -ws * a
     return a
 
@@ -178,10 +183,9 @@ def PartialNum4(n_E,n_D,ws):
     :param ws: 超参数
     :return: 偏导值
     '''
-    i = n_D // Nx
-    j = n_D - Nx * i
+    j = n_D // Nx
     b =(j - uy)/fy
-    if(n_E == n_D + Nx):
+    if(n_E == n_D + 1):
         return -ws * b
     return b
 
@@ -193,7 +197,7 @@ def PartialNum5(n_E,n_D,ws):
     :param ws: 超参数
     :return: 偏导值
     '''
-    if(n_E == n_D + Nx):
+    if(n_E == n_D + 1):
         return -ws
     return 1
 
@@ -393,9 +397,12 @@ def GaussNewton(F, B, Di, I, D, w):
         F[0][i] = constrains.DepthConstraint(D, Di, i-5*N, wp)
 
     print("F finished!")
-    np.savetxt(fname="F.csv",X=F,fmt="%f",delimiter=",")
+    np.savetxt(fname="./test_data/F.csv", X=F, fmt="%f", delimiter=",")
     J = Jacobi(D, w, l)
     print("J finished!")
+    print(J)
+    #inv = InvLU.InvFunc(J)
+    #print("inv finished")
     print(np.matmul(J.T, J))
     mid = np.matmul(J.T, J)
     print(mid.shape)
