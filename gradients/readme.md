@@ -26,10 +26,10 @@
   - 需要对梯度进行检验 
 ### 5.修改
 - forward：
-  -line42:去掉/fx,/fy
-  -line122：p3[2][n]=D[n]
-  -line180:int强制转换报错？
--BP：
-  -line123，line124感觉应该缩进
--main：
-  -line135：改成dloss_dD=np.dot(np.dot(np.dot(np.dot(dloss_dE,dE_dB),dB_dH),dH_dn),dn_dD)+np.dot(np.dot(dloss_dE,dE_dp),dp_dD)+np.dot(dloss_dE,dE_dD)，也许会算得更快
+  - line42:去掉/fx,/fy
+  - line122：p3[2][n]=D[n]
+  - line180:int强制转换报错？
+- BP：
+  - line123，line124感觉应该缩进
+- main：
+  - line135：改成dloss_dD=np.dot(np.dot(np.dot(np.dot(dloss_dE,dE_dB),dB_dH),dH_dn),dn_dD)+np.dot(np.dot(dloss_dE,dE_dp),dp_dD)+np.dot(dloss_dE,dE_dD)，也许会算得更快
