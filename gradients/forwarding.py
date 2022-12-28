@@ -39,7 +39,7 @@ def D2n(D, Nx):
 
         a = (ux-i)/fx
         b = (uy-j)/fy
-        normal[2][n] = a*normal[0][n]/fx + b*normal[1][n]/fy - D[n-Nx]*D[n-1]/(fx*fy)
+        normal[2][n] = a*normal[0][n] + b*normal[1][n] - D[n-Nx]*D[n-1]/(fx*fy)
 
         # 归一化
         m = math.sqrt(pow(normal[0][n], 2) + pow(normal[1][n], 2) + pow(normal[2][n], 2))
@@ -119,7 +119,7 @@ def D2p3(D, Nx):
         # 分别求第n个点的x,y,z三维点云坐标
         p3[0][n] = D[n] * (i - ux)/fx
         p3[1][n] = D[n] * (j - uy)/fy
-        p3[2][n] = 1
+        p3[2][n] = D[n]
     return p3
 
 

@@ -57,15 +57,22 @@ def VisualPoints(points, Nx):
 
 
 if __name__ == '__main__':
+    # 清空文件内容
+    f = open('results.txt', 'w')
+    f.truncate()
+    f.close()
     D_img = np.array(Image.open('../processed/cut/D_cut.png'))
     I_img = cv.imread("../processed/cut/I.png", cv.IMREAD_GRAYSCALE)
 
     # 为防止雅可比矩阵内存超限，暂时先对图像下采样
-    height = D_img.shape[0]
+    height = I_img.shape[0]
     width = I_img.shape[1]
 
-    D_new = np.zeros((height//sampler, width//sampler), np.int32)
-    I_new = np.zeros((height//sampler, width//sampler), np.uint8)
+    # 针对能否整除两种情况生成合适的图像大小
+    flag1 = int(not(height % sampler == 0))
+    flag2 = int(not(width % sampler == 0))
+    D_new = np.zeros((height//sampler + flag1, width//sampler + flag2), np.int32)
+    I_new = np.zeros((height//sampler + flag1, width//sampler + flag2), np.uint8)
     for i in range(height):
         for j in range(width):
             if i % sampler == 0 and j % sampler == 0:
@@ -82,16 +89,19 @@ if __name__ == '__main__':
     D = np.array(Di.copy())  # 用原始深度数组初始化待优化的深度数组
     F = np.zeros((1, 6*N))   # 6N维待优化目标函数
 
-    w = [1, 400, 10]
+    w = [1, 400, 1000]
     albedo = 1
     mask = np.ones(N)
-    timers = 10
+    timers = 250
     # step 设定每一轮的步长
-    step = 0.003 * np.ones(timers)
-    step[0] = 0.01
+    step = 0.0000001 * np.ones(timers)
     loss = np.zeros(timers)
+    loss1 = np.zeros(timers)
+    loss2 = np.zeros(timers)
+    loss3 = np.zeros(timers)
     # 梯度下降循环
     for timer in range(timers):
+        f = open('results.txt', 'a')
         start = time.process_time()
         # 正向传播，刷新各个参量
         normal, mask_n = fwd.D2n(D, Nx)             # 得到3xN的矩阵normal
@@ -113,13 +123,21 @@ if __name__ == '__main__':
         E, loss[timer] = fwd.E2loss(E1, E2, E345, E6, w)   # 得到6xN的矩阵E以及数值loss
         mask = cv.bitwise_and(cv.bitwise_and(mask_E1, mask_E2), mask_E345)
         # 与运算得到总的mask为1xN的矩阵
-        '''
-        print("E12: "+str(np.sum(E1) + np.sum(E2)))
-        print("E345: " + str(np.sum(E345)))
-        print("E6: " + str(np.sum(E6)))
-        '''
+
+        loss1[timer] = str(w[0] * (np.sum(E1) + np.sum(E2)))
+        loss2[timer] = str(w[1] * np.sum(E345))
+        loss3[timer] = str(w[2] * np.sum(E6))
+
+        print("loss1: "+str(loss1[timer]))
+        print("loss2: "+str(loss2[timer]))
+        print("loss3: "+str(loss3[timer]))
         print("loss: "+str(loss[timer]))
 
+        f.write("timer: "+str(timer)+' ')
+        f.write("loss1: "+str("%12.5f" % loss1[timer])+' ')
+        f.write("loss2: "+str("%12.5f" % loss2[timer])+' ')
+        f.write("loss3: "+str("%12.5f" % loss3[timer])+' ')
+        f.write("loss: "+str("%12.5f" % loss[timer])+' ')
 
         # 反向传播，求解梯度
         dloss_dE = BP.Partial_loss2E(N, w, mask)    # 1x6N的矩阵
@@ -131,13 +149,33 @@ if __name__ == '__main__':
         dn_dD = BP.Partial_normal2D(mask, Nx, D)    # 3NxN的矩阵
         dp_dD = BP.Partial_p32D(mask, D, Nx)        # 3NxN的矩阵
         print("yes")
-        dloss_dD = np.dot(dloss_dE, (np.dot(dE_dB, np.dot(dB_dH, np.dot(dH_dn, dn_dD))) +
-                                     np.dot(dE_dp, dp_dD) + dE_dD))
 
-        D = D + dloss_dD * step[timer]
+        dloss_dD = np.dot(np.dot(np.dot(np.dot(dloss_dE, dE_dB), dB_dH), dH_dn), dn_dD) + \
+                                     np.dot(np.dot(dloss_dE, dE_dp), dp_dD) + np.dot(dloss_dE, dE_dD)
+
+        D = D - dloss_dD * step[timer]
 
         end = time.process_time()
         print("run time: "+str(end - start))
+        f.write("run time: "+str("%3.2f" % (end - start))+'\n')
+        f.close()
+
+    # 绘制loss曲线
+    x = range(timers)
+    plt.plot(x, loss, label='loss')
+    plt.plot(x, loss1, label='loss1', color='r')
+    plt.plot(x, loss2, label='loss2', color='g')
+    plt.plot(x, loss3, label='loss3', color='b')
+    plt.xlabel('timers')
+    plt.ylabel('loss')
+    plt.savefig('loss.png')
+    plt.close()
+
+    plt.plot(x, loss, label='loss')
+    plt.savefig('loss_show.png')
+    plt.close()
+
+
 
 
 

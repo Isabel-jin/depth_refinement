@@ -120,8 +120,8 @@ def Partial_B2H(B, mask, l, albedo):
         for n in range(N):
             if mask[n] == 0:
                 continue
-        kn = k * N + n
-        dB_dH[n][kn] = albedo * l[k]
+            kn = k * N + n
+            dB_dH[n][kn] = albedo * l[k]
     return dB_dH
 
 
